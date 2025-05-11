@@ -17,12 +17,12 @@
 #endif
 
 static void
-vectorops_prog_1(struct svc_req *rqstp, register SVCXPRT *transp)
+concserver_prog_1(struct svc_req *rqstp, register SVCXPRT *transp)
 {
 	union {
 		Dianismata ginomeno_dianismaton_1_arg;
 		Dianismata mesitimi_1_arg;
-		ScaleInput ginomeno_1_arg;
+		GinomenoEisodos ginomeno_1_arg;
 	} argument;
 	char *result;
 	xdrproc_t _xdr_argument, _xdr_result;
@@ -46,7 +46,7 @@ vectorops_prog_1(struct svc_req *rqstp, register SVCXPRT *transp)
 		break;
 
 	case GINOMENO:
-		_xdr_argument = (xdrproc_t) xdr_ScaleInput;
+		_xdr_argument = (xdrproc_t) xdr_GinomenoEisodos;
 		_xdr_result = (xdrproc_t) xdr_GinomenoEpistrofi;
 		local = (char *(*)(char *, struct svc_req *)) ginomeno_1_svc;
 		break;
@@ -76,15 +76,15 @@ main (int argc, char **argv)
 {
 	register SVCXPRT *transp;
 
-	pmap_unset (VECTOROPS_PROG, VECTOROPS_VERS);
+	pmap_unset (CONCSERVER_PROG, CONCSERVER_VERS);
 
 	transp = svcudp_create(RPC_ANYSOCK);
 	if (transp == NULL) {
 		fprintf (stderr, "%s", "cannot create udp service.");
 		exit(1);
 	}
-	if (!svc_register(transp, VECTOROPS_PROG, VECTOROPS_VERS, vectorops_prog_1, IPPROTO_UDP)) {
-		fprintf (stderr, "%s", "unable to register (VECTOROPS_PROG, VECTOROPS_VERS, udp).");
+	if (!svc_register(transp, CONCSERVER_PROG, CONCSERVER_VERS, concserver_prog_1, IPPROTO_UDP)) {
+		fprintf (stderr, "%s", "unable to register (CONCSERVER_PROG, CONCSERVER_VERS, udp).");
 		exit(1);
 	}
 
@@ -93,8 +93,8 @@ main (int argc, char **argv)
 		fprintf (stderr, "%s", "cannot create tcp service.");
 		exit(1);
 	}
-	if (!svc_register(transp, VECTOROPS_PROG, VECTOROPS_VERS, vectorops_prog_1, IPPROTO_TCP)) {
-		fprintf (stderr, "%s", "unable to register (VECTOROPS_PROG, VECTOROPS_VERS, tcp).");
+	if (!svc_register(transp, CONCSERVER_PROG, CONCSERVER_VERS, concserver_prog_1, IPPROTO_TCP)) {
+		fprintf (stderr, "%s", "unable to register (CONCSERVER_PROG, CONCSERVER_VERS, tcp).");
 		exit(1);
 	}
 

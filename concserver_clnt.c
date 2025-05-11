@@ -40,13 +40,13 @@ mesitimi_1(Dianismata *argp, CLIENT *clnt)
 }
 
 GinomenoEpistrofi *
-ginomeno_1(ScaleInput *argp, CLIENT *clnt)
+ginomeno_1(GinomenoEisodos *argp, CLIENT *clnt)
 {
 	static GinomenoEpistrofi clnt_res;
 
 	memset((char *)&clnt_res, 0, sizeof(clnt_res));
 	if (clnt_call (clnt, GINOMENO,
-		(xdrproc_t) xdr_ScaleInput, (caddr_t) argp,
+		(xdrproc_t) xdr_GinomenoEisodos, (caddr_t) argp,
 		(xdrproc_t) xdr_GinomenoEpistrofi, (caddr_t) &clnt_res,
 		TIMEOUT) != RPC_SUCCESS) {
 		return (NULL);

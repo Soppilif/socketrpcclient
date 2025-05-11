@@ -38,19 +38,17 @@ mesitimi_1_svc(Dianismata *argp, struct svc_req *rqstp)
 }
 
 GinomenoEpistrofi *
-ginomeno_1_svc(ScaleInput *argp, struct svc_req *rqstp)
+ginomeno_1_svc(GinomenoEisodos *argp, struct svc_req *rqstp)
 {
 	static GinomenoEpistrofi  result;
 	int n = argp->X.X_len;
 
-    // Απελευθέρωσε παλαιά μνήμη αν υπάρχει
-    if (result.result.result_val != NULL) {
+       if (result.result.result_val != NULL) {
         free(result.result.result_val);
         result.result.result_val = NULL;
     }
 
-    // Δέσμευση νέας μνήμης για το αποτέλεσμα
-    result.result.result_val = malloc(n * sizeof(double));
+        result.result.result_val = malloc(n * sizeof(double));
     result.result.result_len = n;
 
     for (int i = 0; i < n; i++)

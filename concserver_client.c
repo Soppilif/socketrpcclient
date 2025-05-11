@@ -15,62 +15,61 @@
 #define PORT 5000
 
 void handle_client(int clientfd, char *rpc_host) {
-    int choice, n;
-    int *X = NULL, *Y = NULL;
-    double r;
+    while (1) {
+        int choice, n;
+        int *X = NULL, *Y = NULL;
+        double r;
 
-    // Διάβασε επιλογή και δεδομένα από socket
-    if (read(clientfd, &choice, sizeof(int)) != sizeof(int)) { close(clientfd); return; }
-    if (read(clientfd, &n, sizeof(int)) != sizeof(int)) { close(clientfd); return; }
+        if (read(clientfd, &choice, sizeof(int)) != sizeof(int)) break;
+        if (choice == 0) break;
 
-    X = malloc(n * sizeof(int));
-    if (!X) { close(clientfd); return; }
-    if (read(clientfd, X, n * sizeof(int)) != n * (int)sizeof(int)) { free(X); close(clientfd); return; }
+        if (read(clientfd, &n, sizeof(int)) != sizeof(int)) break;
+        X = malloc(n * sizeof(int));
+        if (!X) break;
+        if (read(clientfd, X, n * sizeof(int)) != n * (int)sizeof(int)) { free(X); break; }
 
-    if (choice == 1 || choice == 2) {
-        Y = malloc(n * sizeof(int));
-        if (!Y) { free(X); close(clientfd); return; }
-        if (read(clientfd, Y, n * sizeof(int)) != n * (int)sizeof(int)) { free(X); free(Y); close(clientfd); return; }
-    }
-    if (choice == 3) {
-        if (read(clientfd, &r, sizeof(double)) != sizeof(double)) { free(X); close(clientfd); return; }
-    }
+        if (choice == 1 || choice == 2) {
+            Y = malloc(n * sizeof(int));
+            if (!Y) { free(X); break; }
+            if (read(clientfd, Y, n * sizeof(int)) != n * (int)sizeof(int)) { free(X); free(Y); break; }
+        }
+        if (choice == 3) {
+            if (read(clientfd, &r, sizeof(double)) != sizeof(double)) { free(X); break; }
+        }
 
-    // Δημιουργία RPC client
-    CLIENT *clnt = clnt_create(rpc_host, VECTOROPS_PROG, VECTOROPS_VERS, "tcp");
-    if (!clnt) {
-        clnt_pcreateerror(rpc_host);
+        CLIENT *clnt = clnt_create(rpc_host, CONCSERVER_PROG, CONCSERVER_VERS, "tcp");
+        if (!clnt) {
+            clnt_pcreateerror(rpc_host);
+            if (X) free(X);
+            if (Y) free(Y);
+            break;
+        }
+
+        if (choice == 1) {
+            Dianismata in;
+            in.X.X_len = n; in.X.X_val = X;
+            in.Y.Y_len = n; in.Y.Y_val = Y;
+            int *res = ginomeno_dianismaton_1(&in, clnt);
+            write(clientfd, res, sizeof(int));
+        } else if (choice == 2) {
+            Dianismata in;
+            in.X.X_len = n; in.X.X_val = X;
+            in.Y.Y_len = n; in.Y.Y_val = Y;
+            MesesTimes *res = mesitimi_1(&in, clnt);
+            write(clientfd, &res->Ex, sizeof(double));
+            write(clientfd, &res->Ey, sizeof(double));
+        } else if (choice == 3) {
+            GinomenoEisodos in;
+            in.X.X_len = n; in.X.X_val = X;
+            in.r = r;
+            GinomenoEpistrofi *res = ginomeno_1(&in, clnt);
+            write(clientfd, res->result.result_val, n * sizeof(double));
+        }
+
         if (X) free(X);
         if (Y) free(Y);
-        close(clientfd);
-        return;
+        clnt_destroy(clnt);
     }
-
-    // RPC κλήση και αποστολή απάντησης στον client
-    if (choice == 1) { // Εσωτερικό γινόμενο
-        Dianismata in;
-        in.X.X_len = n; in.X.X_val = X;
-        in.Y.Y_len = n; in.Y.Y_val = Y;
-        int *res = ginomeno_dianismaton_1(&in, clnt);
-        write(clientfd, res, sizeof(int));
-    } else if (choice == 2) { // Μέσοι όροι
-        Dianismata in;
-        in.X.X_len = n; in.X.X_val = X;
-        in.Y.Y_len = n; in.Y.Y_val = Y;
-        MesesTimes *res = mesitimi_1(&in, clnt);
-        write(clientfd, &res->Ex, sizeof(double));
-        write(clientfd, &res->Ey, sizeof(double));
-    } else if (choice == 3) { // Πολλαπλασιασμός με r
-        GinomenoEisodos in;
-        in.X.X_len = n; in.X.X_val = X;
-        in.r = r;
-        GinomenoEpistrofi *res = ginomeno_1(&in, clnt);
-        write(clientfd, res->result.result_val, n * sizeof(double));
-    }
-
-    if (X) free(X);
-    if (Y) free(Y);
-    clnt_destroy(clnt);
     close(clientfd);
 }
 

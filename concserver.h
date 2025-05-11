@@ -49,8 +49,8 @@ struct GinomenoEpistrofi {
 };
 typedef struct GinomenoEpistrofi GinomenoEpistrofi;
 
-#define VECTOROPS_PROG 0x23451111
-#define VECTOROPS_VERS 1
+#define CONCSERVER_PROG 0x23451111
+#define CONCSERVER_VERS 1
 
 #if defined(__STDC__) || defined(__cplusplus)
 #define GINOMENO_DIANISMATON 1
@@ -60,9 +60,9 @@ extern  int * ginomeno_dianismaton_1_svc(Dianismata *, struct svc_req *);
 extern  MesesTimes * mesitimi_1(Dianismata *, CLIENT *);
 extern  MesesTimes * mesitimi_1_svc(Dianismata *, struct svc_req *);
 #define GINOMENO 3
-extern  GinomenoEpistrofi * ginomeno_1(ScaleInput *, CLIENT *);
-extern  GinomenoEpistrofi * ginomeno_1_svc(ScaleInput *, struct svc_req *);
-extern int vectorops_prog_1_freeresult (SVCXPRT *, xdrproc_t, caddr_t);
+extern  GinomenoEpistrofi * ginomeno_1(GinomenoEisodos *, CLIENT *);
+extern  GinomenoEpistrofi * ginomeno_1_svc(GinomenoEisodos *, struct svc_req *);
+extern int concserver_prog_1_freeresult (SVCXPRT *, xdrproc_t, caddr_t);
 
 #else /* K&R C */
 #define GINOMENO_DIANISMATON 1
@@ -74,7 +74,7 @@ extern  MesesTimes * mesitimi_1_svc();
 #define GINOMENO 3
 extern  GinomenoEpistrofi * ginomeno_1();
 extern  GinomenoEpistrofi * ginomeno_1_svc();
-extern int vectorops_prog_1_freeresult ();
+extern int concserver_prog_1_freeresult ();
 #endif /* K&R C */
 
 /* the xdr functions */

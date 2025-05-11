@@ -60,8 +60,14 @@ int main(int argc, char *argv[]) {
         printf("Δώσε επιλογή: ");
         scanf("%d", &choice);
 
-        // Στείλε επιλογή
+
         if (write(sockfd, &choice, sizeof(int)) < 0) error("ERROR writing to socket");
+
+        while (choice != 0 && choice != 1 && choice != 2 && choice != 3){
+            printf("Άκυρη επιλογή!\n");
+            printf("Δώσε επιλογή: ");
+            scanf("%d", &choice);
+        }
 
         if (choice == 0) {
             printf("Αποσύνδεση.\n");
@@ -71,6 +77,7 @@ int main(int argc, char *argv[]) {
         printf("Δώσε το μέγεθος n του διανύσματος: ");
         scanf("%d", &n);
         if (write(sockfd, &n, sizeof(int)) < 0) error("ERROR writing to socket");
+
 
         X = malloc(n * sizeof(int));
         if (!X) error("malloc X");
@@ -92,7 +99,7 @@ int main(int argc, char *argv[]) {
             if (write(sockfd, &r, sizeof(double)) < 0) error("ERROR writing r");
         }
 
-        // Λάβε και εμφάνισε αποτελέσματα
+
         if (choice == 1) {
             int res;
             if (read(sockfd, &res, sizeof(int)) != sizeof(int)) error("ERROR reading scalar product");
@@ -110,9 +117,8 @@ int main(int argc, char *argv[]) {
             for (i = 0; i < n; i++) printf("%.2f ", out[i]);
             printf("\n");
             free(out);
-        } else {
-            printf("Άκυρη επιλογή!\n");
         }
+
 
         free(X); X = NULL;
         if (Y) { free(Y); Y = NULL; }

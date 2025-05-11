@@ -17,8 +17,8 @@ struct GinomenoEpistrofi {
     double result<>;
 };
 
-program VECTOROPS_PROG {
-    version VECTOROPS_VERS {
+program CONCSERVER_PROG {
+    version CONCSERVER_VERS {
         /* 1. Εσωτερικό γινόμενο δύο διανυσμάτων */
         int GINOMENO_DIANISMATON(Dianismata) = 1;
 
@@ -26,6 +26,6 @@ program VECTOROPS_PROG {
         MesesTimes MESITIMI(Dianismata) = 2;
 
         /* 3. Γινόμενο r*X */
-        GinomenoEpistrofi GINOMENO(ScaleInput) = 3;
+        GinomenoEpistrofi GINOMENO(GinomenoEisodos) = 3;
     } = 1;
 } = 0x23451111;
