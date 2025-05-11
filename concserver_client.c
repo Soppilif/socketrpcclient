@@ -5,55 +5,106 @@
  */
 
 #include "concserver.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
 
+#define PORT 5000
 
-void
-vectorops_prog_1(char *host)
-{
-	CLIENT *clnt;
-	int  *result_1;
-	Dianismata  ginomeno_dianismaton_1_arg;
-	MesesTimes  *result_2;
-	Dianismata  mesitimi_1_arg;
-	GinomenoEpistrofi  *result_3;
-	ScaleInput  ginomeno_1_arg;
+void handle_client(int clientfd, char *rpc_host) {
+    int choice, n;
+    int *X = NULL, *Y = NULL;
+    double r;
 
-#ifndef	DEBUG
-	clnt = clnt_create (host, VECTOROPS_PROG, VECTOROPS_VERS, "udp");
-	if (clnt == NULL) {
-		clnt_pcreateerror (host);
-		exit (1);
-	}
-#endif	/* DEBUG */
+    // Διάβασε επιλογή και δεδομένα από socket
+    if (read(clientfd, &choice, sizeof(int)) != sizeof(int)) { close(clientfd); return; }
+    if (read(clientfd, &n, sizeof(int)) != sizeof(int)) { close(clientfd); return; }
 
-	result_1 = ginomeno_dianismaton_1(&ginomeno_dianismaton_1_arg, clnt);
-	if (result_1 == (int *) NULL) {
-		clnt_perror (clnt, "call failed");
-	}
-	result_2 = mesitimi_1(&mesitimi_1_arg, clnt);
-	if (result_2 == (MesesTimes *) NULL) {
-		clnt_perror (clnt, "call failed");
-	}
-	result_3 = ginomeno_1(&ginomeno_1_arg, clnt);
-	if (result_3 == (GinomenoEpistrofi *) NULL) {
-		clnt_perror (clnt, "call failed");
-	}
-#ifndef	DEBUG
-	clnt_destroy (clnt);
-#endif	 /* DEBUG */
+    X = malloc(n * sizeof(int));
+    if (!X) { close(clientfd); return; }
+    if (read(clientfd, X, n * sizeof(int)) != n * (int)sizeof(int)) { free(X); close(clientfd); return; }
+
+    if (choice == 1 || choice == 2) {
+        Y = malloc(n * sizeof(int));
+        if (!Y) { free(X); close(clientfd); return; }
+        if (read(clientfd, Y, n * sizeof(int)) != n * (int)sizeof(int)) { free(X); free(Y); close(clientfd); return; }
+    }
+    if (choice == 3) {
+        if (read(clientfd, &r, sizeof(double)) != sizeof(double)) { free(X); close(clientfd); return; }
+    }
+
+    // Δημιουργία RPC client
+    CLIENT *clnt = clnt_create(rpc_host, VECTOROPS_PROG, VECTOROPS_VERS, "tcp");
+    if (!clnt) {
+        clnt_pcreateerror(rpc_host);
+        if (X) free(X);
+        if (Y) free(Y);
+        close(clientfd);
+        return;
+    }
+
+    // RPC κλήση και αποστολή απάντησης στον client
+    if (choice == 1) { // Εσωτερικό γινόμενο
+        Dianismata in;
+        in.X.X_len = n; in.X.X_val = X;
+        in.Y.Y_len = n; in.Y.Y_val = Y;
+        int *res = ginomeno_dianismaton_1(&in, clnt);
+        write(clientfd, res, sizeof(int));
+    } else if (choice == 2) { // Μέσοι όροι
+        Dianismata in;
+        in.X.X_len = n; in.X.X_val = X;
+        in.Y.Y_len = n; in.Y.Y_val = Y;
+        MesesTimes *res = mesitimi_1(&in, clnt);
+        write(clientfd, &res->Ex, sizeof(double));
+        write(clientfd, &res->Ey, sizeof(double));
+    } else if (choice == 3) { // Πολλαπλασιασμός με r
+        GinomenoEisodos in;
+        in.X.X_len = n; in.X.X_val = X;
+        in.r = r;
+        GinomenoEpistrofi *res = ginomeno_1(&in, clnt);
+        write(clientfd, res->result.result_val, n * sizeof(double));
+    }
+
+    if (X) free(X);
+    if (Y) free(Y);
+    clnt_destroy(clnt);
+    close(clientfd);
 }
 
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        printf("usage: %s <rpc_server_host>\n", argv[0]);
+        exit(1);
+    }
+    char *rpc_host = argv[1];
 
-int
-main (int argc, char *argv[])
-{
-	char *host;
+    int sockfd, clientfd;
+    struct sockaddr_in servaddr, cliaddr;
+    socklen_t clilen = sizeof(cliaddr);
 
-	if (argc < 2) {
-		printf ("usage: %s server_host\n", argv[0]);
-		exit (1);
-	}
-	host = argv[1];
-	vectorops_prog_1 (host);
-exit (0);
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) { perror("socket"); exit(1); }
+
+    memset(&servaddr, 0, sizeof(servaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = INADDR_ANY;
+    servaddr.sin_port = htons(PORT);
+
+    if (bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) {
+        perror("bind");
+        exit(1);
+    }
+    if (listen(sockfd, 5) < 0) { perror("listen"); exit(1); }
+
+    printf("concserver_client: Listening on port %d for socket connections...\n", PORT);
+
+    while (1) {
+        clilen = sizeof(cliaddr);
+        clientfd = accept(sockfd, (struct sockaddr *)&cliaddr, &clilen);
+        if (clientfd < 0) { perror("accept"); continue; }
+        handle_client(clientfd, rpc_host);
+    }
 }
